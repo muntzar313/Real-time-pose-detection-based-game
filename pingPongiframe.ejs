@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="./js/pixi.min.js"></script>
+  <script src="./js/bump.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body onselectstart="return false">
+  <center>
+    <div id="wrapper" style="display: none;">
+      <div style="position: absolute; z-index: 1; left: 40%; top: 40%; color:white;  border: 5px color 2d2424;
+;    border-radius: 25px;
+;   ;width: 20%;">
+        <h1 style="color: red; 	font-size: 400%;">GAME OVER</h1>
+        <h1 style="	font-size: 300%;  " onclick="window.location.reload()">Restart</h1>
+        <h1 style="	font-size: 300%; "  onclick="window.location='/'">Home</h1>
+
+      </div>
+
+    </div>
+  </center>
+  <script>
+    //game logic
+    let app = new PIXI.Application({ width: window.innerWidth, height: window.innerHeight });
+    document.body.appendChild(app.view);
+    var col = new Bump();
+    background = PIXI.Sprite.from('./assets/gameAssets/Background.jpg')
+    pad = PIXI.Sprite.from('./assets/gameAssets/pad.png')
+    AIpad = PIXI.Sprite.from('./assets/gameAssets/pad.png')
+    ball = PIXI.Sprite.from('./assets/gameAssets/Ball.png')
+    ball.x = window.innerWidth / 2
+    ball.y = window.innerHeight / 2
+    ball.circular = true
+    AIpad.x = window.innerWidth / 2
+    AIpad.y = 0
+    pad.y = window.innerHeight - 120
+    pad.x = 100
+    app.stage.addChild(background)
+    app.stage.addChild(AIpad)
+    app.stage.addChild(pad)
+    app.stage.addChild(ball)
+    window.onload=(()=>{
+    setTimeout(()=>{
+      app.ticker.add(gameLoop)
+
+    },4000)
+
+  });
+    xChange = 5
+    yChange = 5
+    var padInterpolationMove=[]
+    function guessballLocation(x, y) {
+
+    }
+    var mouse = app.renderer.plugins.interaction.mouse.global;
+    document.onclick = () => { console.log(mouse.x, mouse.y) }
+    function gameLoop(delta) {
+
+
+      if (ball.y >= window.innerHeight) {
+        document.getElementById("wrapper").style.display = "inline";
+        return
+      }
+      AIpad.x = ball.x - AIpad.width / 2
+      padcollided = col.rectangleCollision(ball, pad)
+      aipadcollided = col.rectangleCollision(ball, AIpad)
+      if (padcollided != undefined) {
+        console.log(padcollided)
+        if (padcollided[0] == "l") {
+          xChange = -xChange
+        }
+        else if (padcollided[0] == "r") {
+          yChange = Math.abs(yChange)
+        }
+        else if (padcollided[0] == "b") {
+          yChange = -yChange
+        }
+
+      }
+
+      if (aipadcollided != undefined) {
+        console.log(aipadcollided)
+        if (aipadcollided[0] == "l") {
+          xChange = -xChange
+        }
+        else if (aipadcollided[0] == "r") {
+          yChange = Math.abs(yChange)
+        }
+        else if (aipadcollided[0] == "t") {
+          yChange = Math.abs(yChange)
+        }
+
+      }
+      MouseX = mouse.x
+      // pad.x = MouseX
+
+      //  ball.x=MouseX
+      //ball.y=mouse.y  //testing
+      if (ball.x > window.innerWidth - 60) {
+        xChange = -xChange;
+      }
+      if (ball.x < 15) {
+        xChange = Math.abs(xChange);
+      }
+      if (ball.y > window.innerHeight) {
+        yChange = -yChange
+      }
+      if (ball.y < 15) {
+        yChange = Math.abs(yChange)
+      }
+      r = ball.x;
+      b = ball.y;
+      ball.y += yChange;
+      ball.x = ball.x + xChange;
+
+
+      if (padInterpolationMove.length > 0) {
+        pad.x = padInterpolationMove[0]
+        padInterpolationMove.shift()
+        console.log(padInterpolationMove)
+      }
+
+    }
+
+
+    window.addEventListener('resize', resize);
+    function resize() {
+      app.renderer.resize(window.innerWidth, window.innerHeight);
+
+    }
+
+
+    resize();
+
+    function scale(number, inMin, inMax, outMin, outMax) {
+      return (number - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+    }
+    const lerp = (a, b, amount) => (1 - amount) * a + amount * b;
+    window.addEventListener("message",
+      function (e) {
+        padInterpolationMove=[]
+        scaledvalue = scale(e.data / 13, 0, 640, 0, document.body.clientWidth-pad.width);
+        if(padInterpolationMove.length==0){
+          
+        }
+        padInterpolationMove.push(lerp(pad.x,scaledvalue,0.2))
+        
+        padInterpolationMove.push(lerp(pad.x,scaledvalue,0.4))
+        padInterpolationMove.push(lerp(pad.x,scaledvalue,0.6))
+        padInterpolationMove.push(lerp(pad.x,scaledvalue,0.8))
+        padInterpolationMove.push(lerp(pad.x,scaledvalue,0.9))
+        padInterpolationMove.push(scaledvalue)
+        //pad.x=interp
+        //pad.x = pad.x+diff
+        //pad.x = scaledvalue-pad.width/2
+        //console.log(padInterpolationMove,Date.now())
+      },
+      false);
+  </script>
+</body>
+
+</html>

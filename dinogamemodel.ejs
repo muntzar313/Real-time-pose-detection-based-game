@@ -1,0 +1,94 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/p5.js"></script>
+    <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden
+        }
+      canvas {
+            display: none;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+            height: 100%;
+        }
+
+    </style>
+</head>
+
+<body>
+    <iframe id="modeliframe" src="/dinogameiframe" sandbox="allow-scripts allow-downloads"
+        style="position:fixed; top:0; left:0; bottom:0; right:0; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;"></iframe>
+    <script>
+        let video;
+        let poseNet;
+        let pose;
+        let posebuffer = [];
+        let bufferlength = 6;
+        function setup() {
+            createCanvas(windowWidth+100, windowHeight+100);
+            background(153);
+
+            video = createCapture(VIDEO);
+            video.hide();
+            poseNet = ml5.poseNet(video, modelLoaded);
+            poseNet.on('pose', gotPoses);
+        }
+        function checkifjump(){
+            mxm =  posebuffer[0];
+            mnm =  posebuffer[bufferlength];
+          //  console.log("maximum", mxm, "minimum", mnm)
+            diff = mxm - mnm                                      //to chek if user jumped
+            if (diff >= 300) {
+           //     console.log(diff,posebuffer)
+                document.getElementById("modeliframe").contentWindow.postMessage("jump", "*");
+                posebuffer = []
+            }
+          
+        }
+        function gotPoses(poses) {
+            //console.log(poses);
+            if (poses.length > 0) {
+                posebuffer.push([
+                parseInt(poses[0]["pose"]["leftAnkle"]["y"])+
+                parseInt(poses[0]["pose"]["leftHip"]["y"])+
+                parseInt(poses[0]["pose"]["leftKnee"]["y"])+
+                parseInt(poses[0]["pose"]["leftShoulder"]["y"])+
+                parseInt(poses[0]["pose"]["rightAnkle"]["y"])+
+                parseInt(poses[0]["pose"]["rightHip"]["y"])+
+                parseInt(poses[0]["pose"]["rightKnee"]["y"])+
+                parseInt(poses[0]["pose"]["rightShoulder"]["y"])])
+                
+                checkifjump();
+                if (posebuffer.length > bufferlength) {
+                    posebuffer.shift();
+                }
+            }
+
+        }
+
+        function modelLoaded() {
+            console.log('poseNet ready');
+        }
+
+        function draw() {
+            image(video, 0, 0   );
+
+        }
+
+        //should set time insted of number of values on the buffer 
+        //to make it more accurate
+    </script>
+
+</body>
+
+</html>
